@@ -1,6 +1,6 @@
 import aiohttp
+from asyncio import gather, Semaphore
 
-from utils.funcoes import set_trace
 from constants.requisicao import requisicao
 
 
@@ -18,6 +18,42 @@ class RequisicaoAsync:
     async def __aexit__(self, exc_type, exc_value, traceback):
         # Encerra sessão
         await self.session.close()
+
+    async def limitador(self, tasks, limit):
+        """
+        Descrição breve da função.
+
+        :param tasks: Lista de tasks para execução.
+        :type metodo: list.
+
+        :param limit: Inteiro que define o limite para Semaphore.
+        :type metodo: int.
+
+        :return: O retorno é uma lista com aguardáveis processados.
+        :rtype: (str, bytes, list, dict, str).
+        """
+        # Define limite do lote
+        semaphore = Semaphore(limit)
+
+        async def interno(task):
+            # Aplicando delimitação do semaphore
+            async with semaphore:
+                return await task
+
+        lista_retorno = []
+
+        # Itera iniciando em 0, até a quantidade de tasks num compasso
+        # estabelecido pelo limite do semaphore.
+        for indice in range(0, len(tasks), limit):
+            # Captura as tasks do intervalo estabelecido
+            faixa = tasks[indice: indice + limit]
+
+            # Aguarda e retorna execução das tasks
+            lista_retorno.extend(
+                await gather(*[interno(item) for item in faixa])
+            )
+
+        return lista_retorno
 
     async def valida_parametros_cliente(self, *args):
         # Itere nos métodos em paralelo com a lista predefinida
@@ -67,7 +103,7 @@ class RequisicaoAsync:
         async with getattr(self.session, metodo)(**kwargs) as response:
             # Atribui parâmetro ao método response
             retorno = getattr(response, retorno)
-            set_trace()
+
             match retorno.__class__.__qualname__:
                 # Entra caso retorno se um método
                 case requisicao.tipo_metodo_retorno:
