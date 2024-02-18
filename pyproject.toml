@@ -8,6 +8,7 @@ packages = [{include = "requisicoes_assincronas"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
+aiohttp = "^3.9.3"
 
 
 [build-system]
