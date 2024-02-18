@@ -5,7 +5,7 @@ requisicao = SimpleNamespace()
 
 # Relacionados aos parâmetros repassados em 'cliente'
 requisicao.kwargs = ['url', 'json' , 'params']
-requisicao.tipos_retorno = ['text', 'read' , 'json', 'status']
+requisicao.tipos_retorno = ['text', 'read' , 'json', 'status', 'reason']
 requisicao.tipos_metodos = [
     'get', 'post', 'put', 'delete', 'head', 'options', 'patch'
 ]
