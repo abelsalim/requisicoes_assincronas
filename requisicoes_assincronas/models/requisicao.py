@@ -70,6 +70,7 @@ class RequisicaoAsync:
             self,
             metodo='get',
             retorno='status',
+            content_type=None,
             timeout=None,
             **kwargs
         ):
@@ -101,12 +102,24 @@ class RequisicaoAsync:
             )
 
         async with getattr(self.session, metodo)(**kwargs) as response:
-            # Atribui parâmetro ao método response
-            retorno = getattr(response, retorno)
+            # Define retorno
+            match retorno:
+                case requisicao.retorne_response:
+                    # retorno é próprio 'response'
+                    retorno = response
+                case _:
+                    # Atribui parâmetro ao objeto 'response'
+                    retorno = getattr(response, retorno)
 
-            match retorno.__class__.__qualname__:
+            match (retorno.__class__.__qualname__, retorno):
                 # Entra caso retorno se um método
-                case requisicao.tipo_metodo_retorno:
+                case (_, requisicao.retorne_response):
+                    return await response
+                # Entra caso retorno se um método
+                case (requisicao.tipo_metodo_retorno, requisicao.retorne_json):
+                    return await retorno(content_type=content_type)
+                # Entra caso retorno se um método
+                case (requisicao.tipo_metodo_retorno, _):
                     return await retorno()
                 # Senão executa como atributo
                 case _:

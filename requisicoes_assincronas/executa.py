@@ -8,15 +8,16 @@ async def main():
     async with RequisicaoAsync() as request:
 
         retorno = await gather(
-            *[request.cliente(
+            request.cliente(
                 retorno='json',
+                content_type='application/josn',
                 timeout=10,
                 **{'url': ibge.get_ranking}
-            ) for _ in range(4)]
+            )
         )
 
         for conteudo in retorno:
-            print(f'\n{conteudo}', end=f'\n{35 * '-'}')
+            print(conteudo)
 
 
 run(main())
