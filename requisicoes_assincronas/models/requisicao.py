@@ -1,17 +1,22 @@
 import aiohttp
 from asyncio import gather, Semaphore
 
+from utils.funcoes import set_trace
 from constants.requisicao import requisicao
 
 
 class RequisicaoAsync:
 
-    def __init__(self):
+    def __init__(self, limit_connector=0):
+        self.limit_connector = limit_connector
+        self.conector = None
         self.session = None
 
     async def __aenter__(self):
+        # Gera connector com limite de conexão preestabelecido
+        self.conector = aiohttp.TCPConnector(limit=self.limit_connector)
         # Gera session
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(connector=self.conector)
 
         return self
 
