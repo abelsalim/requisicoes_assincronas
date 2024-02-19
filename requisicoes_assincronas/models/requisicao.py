@@ -1,7 +1,7 @@
 import aiohttp
-from asyncio import gather, Semaphore
 
-from utils.funcoes import set_trace
+from asyncio import gather, Semaphore, sleep
+
 from constants.requisicao import requisicao
 
 
@@ -43,6 +43,8 @@ class RequisicaoAsync:
         async def interno(task):
             # Aplicando delimitação do semaphore
             async with semaphore:
+                await sleep(0.00001)
+
                 return await task
 
         lista_retorno = []
