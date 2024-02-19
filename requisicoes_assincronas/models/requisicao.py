@@ -80,6 +80,15 @@ class RequisicaoAsync:
         :param metodo: Método de requisição utilizado.
         :type metodo: str.
 
+        :param retorno: Trata-se do atributo selecionável de response.
+        :type retorno: str.
+
+        :param content_type: content_type para decodificação do json.
+        :type content_type: str.
+
+        :param timeout: Tempo limite para requisições.
+        :type timeout: int.
+
         :param kwargs: Argumentos nomeados variáveis.
                     - url: URL utilizada na conexão.
                     - params: Parâmetros adicionados na url de conexão.
