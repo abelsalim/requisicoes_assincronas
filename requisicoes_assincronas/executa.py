@@ -12,7 +12,7 @@ async def main():
         tasks = [
             create_task(
                 request.cliente(
-                    retorno='json',
+                    parametros_retorno=['json'],
                     content_type='application/josn',
                     timeout=100,
                     **{'url': ibge.get_ranking}

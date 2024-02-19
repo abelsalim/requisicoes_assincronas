@@ -60,11 +60,16 @@ class RequisicaoAsync:
 
         return lista_retorno
 
-    async def valida_parametros_cliente(self, *args):
+    async def valida_parametros_cliente(self, parametros):
+        # unificando lista_comparativa do objeto requisicao
+        lista_comparativa = [
+            item for lista in requisicao.lista_comparativa for item in lista
+        ]
+
         # Itere nos métodos em paralelo com a lista predefinida
-        for valor, lista in zip(args, requisicao.lista_comparativa):
+        for valor in parametros:
             # Sai se valor existe
-            if valor in lista:
+            if valor in lista_comparativa:
                 continue
 
             raise AttributeError(
@@ -74,7 +79,7 @@ class RequisicaoAsync:
     async def cliente(
             self,
             metodo='get',
-            retorno='status',
+            parametros_retorno=['status'],
             content_type=None,
             timeout=None,
             **kwargs
@@ -85,8 +90,8 @@ class RequisicaoAsync:
         :param metodo: Método de requisição utilizado.
         :type metodo: str.
 
-        :param retorno: Trata-se do atributo selecionável de response.
-        :type retorno: str.
+        :param parametros_retorno: Os atributos selecionáveis do response.
+        :type parametros_retorno: list.
 
         :param content_type: content_type para decodificação do json.
         :type content_type: str.
@@ -97,7 +102,7 @@ class RequisicaoAsync:
         :param kwargs: Argumentos nomeados variáveis.
                     - url: URL utilizada na conexão.
                     - params: Parâmetros adicionados na url de conexão.
-                    - headers: Diciońario que compõe o cabaçalho da conexão.
+                    - headers: Dicionário que compõe o cabeçalho da conexão.
                     - json: Dicionário que será tratado como json.
                     - data: list/dict/binary/str que substituirá o payload.
         :type kwargs: dict.
@@ -107,7 +112,9 @@ class RequisicaoAsync:
         """
 
         # Valida parâmetros (metodo, retorno) repassados
-        await self.valida_parametros_cliente(metodo, retorno)
+        await self.valida_parametros_cliente(
+            parametros_retorno.__add__([metodo])
+        )
 
         if timeout:
             # Caso time out seja repassado então adicione no kwargs
@@ -116,25 +123,31 @@ class RequisicaoAsync:
             )
 
         async with getattr(self.session, metodo)(**kwargs) as response:
-            # Define retorno
-            match retorno:
-                case requisicao.retorne_response:
-                    # retorno é próprio 'response'
-                    retorno = response
-                case _:
-                    # Atribui parâmetro ao objeto 'response'
-                    retorno = getattr(response, retorno)
+            lista_retorno = []
+            for retorno in parametros_retorno:
+                # Define retorno
+                match retorno:
+                    case requisicao.retorne_response:
+                        # retorno é próprio 'response'
+                        retorno = response
+                    case _:
+                        # Atribui parâmetro ao objeto 'response'
+                        retorno = getattr(response, retorno)
 
-            match (retorno.__class__.__qualname__, retorno):
-                # Entra caso retorno se um método
-                case (_, requisicao.retorne_response):
-                    return await response
-                # Entra caso retorno se um método
-                case (requisicao.tipo_metodo_retorno, requisicao.retorne_json):
-                    return await retorno(content_type=content_type)
-                # Entra caso retorno se um método
-                case (requisicao.tipo_metodo_retorno, _):
-                    return await retorno()
-                # Senão executa como atributo
-                case _:
-                    return retorno
+                match (retorno.__class__.__qualname__, retorno):
+                    # Entra caso retorno se um método
+                    case (_, requisicao.retorne_response):
+                        lista_retorno.append(await response)
+                    # Entra caso retorno se um método
+                    case (requisicao.tipo_metodo_retorno, requisicao.retorne_json):
+                        lista_retorno.extend(
+                            await retorno(content_type=content_type)
+                        )
+                    # Entra caso retorno se um método
+                    case (requisicao.tipo_metodo_retorno, _):
+                        lista_retorno.append(await retorno())
+                    # Senão executa como atributo
+                    case _:
+                        lista_retorno.append(retorno)
+
+            return lista_retorno
