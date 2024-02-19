@@ -26,8 +26,7 @@ async def limitador(lista, limite):
 
 
 async def main():
-    retorno = []
-    retorno.extend(await limitador([1, 2, 4, 5, 6, 7, 8, 9], 2))
+    retorno = [item for item in await limitador([1, 2, 4, 5, 6, 7, 8, 9], 2)]
 
     print(retorno)
 
