@@ -1,6 +1,6 @@
 import aiohttp
 
-from asyncio import gather, Semaphore, sleep
+from asyncio import gather, Semaphore
 
 from constants.requisicao import requisicao
 
@@ -43,8 +43,6 @@ class RequisicaoAsync:
         async def interno(task):
             # Aplicando delimitação do semaphore
             async with semaphore:
-                await sleep(0.00001)
-
                 return await task
 
         lista_retorno = []
@@ -124,32 +122,41 @@ class RequisicaoAsync:
                 {'timeout': aiohttp.ClientTimeout(total=timeout)}
             )
 
-        async with getattr(self.session, metodo)(**kwargs) as response:
-            lista_retorno = []
-            for retorno in parametros_retorno:
-                # Define retorno
-                match retorno:
-                    case requisicao.retorne_response:
-                        # retorno é próprio 'response'
-                        retorno = response
-                    case _:
-                        # Atribui parâmetro ao objeto 'response'
-                        retorno = getattr(response, retorno)
+        try:
+            async with getattr(self.session, metodo)(**kwargs) as response:
+                lista_retorno = []
+                for retorno in parametros_retorno:
+                    # Define retorno
+                    match retorno:
+                        case requisicao.retorne_response:
+                            # retorno é próprio 'response'
+                            retorno = response
+                        case _:
+                            # Atribui parâmetro ao objeto 'response'
+                            retorno = getattr(response, retorno)
 
-                match (retorno.__class__.__qualname__, retorno):
-                    # Entra caso retorno se um método
-                    case (_, requisicao.retorne_response):
-                        lista_retorno.append(await response)
-                    # Entra caso retorno se um método
-                    case (requisicao.tipo_metodo_retorno, requisicao.retorne_json):
-                        lista_retorno.extend(
-                            await retorno(content_type=content_type)
-                        )
-                    # Entra caso retorno se um método
-                    case (requisicao.tipo_metodo_retorno, _):
-                        lista_retorno.append(await retorno())
-                    # Senão executa como atributo
-                    case _:
-                        lista_retorno.append(retorno)
+                    match (retorno.__class__.__qualname__, retorno):
+                        # Entra caso retorno se um método
+                        case (_, requisicao.retorne_response):
+                            lista_retorno.append(await response)
+                        # Entra caso retorno se um método
+                        case (
+                            requisicao.tipo_metodo_retorno,
+                            requisicao.retorne_json
+                        ):
+                            lista_retorno.extend(
+                                await retorno(content_type=content_type)
+                            )
+                        # Entra caso retorno se um método
+                        case (requisicao.tipo_metodo_retorno, _):
+                            lista_retorno.append(await retorno())
+                        # Senão executa como atributo
+                        case _:
+                            lista_retorno.append(retorno)
+        except TimeoutError:
+            return
 
-            return lista_retorno
+        else:
+            return (
+                lista_retorno[0] if len(lista_retorno) == 1 else lista_retorno
+            )
