@@ -1,4 +1,5 @@
 __version__ = "0.1.0"
 
-from . import utils
-from . import constants
+from .main import RequisicaoAsync as requisicao
+
+__all__ = ['requisicao']
