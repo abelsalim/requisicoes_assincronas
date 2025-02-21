@@ -2,7 +2,7 @@ from datetime import datetime
 from asyncio import run, create_task
 
 from constants.ibge import ibge
-from models.requisicao import RequisicaoAsync
+from utils.requisicao import RequisicaoAsync
 
 
 async def main():

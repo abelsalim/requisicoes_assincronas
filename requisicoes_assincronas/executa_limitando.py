@@ -2,7 +2,7 @@ import asyncio
 
 from asyncio import create_task
 
-from models.requisicao import RequisicaoAsync
+from utils.requisicao import RequisicaoAsync
 
 
 async def mostra_numero(numero):
