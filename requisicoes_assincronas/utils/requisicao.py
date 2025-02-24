@@ -2,7 +2,7 @@ import aiohttp
 
 from asyncio import gather, Semaphore
 
-from constants.requisicao import requisicao
+from ..constants.requisicao import requisicao
 
 
 class RequisicaoAsync:

@@ -1,5 +1,6 @@
 from asyncio import create_task
-from utils.requisicao import RequisicaoAsync
+
+from .utils.requisicao import RequisicaoAsync
 
 
 class Requisicao(RequisicaoAsync):
